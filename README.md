@@ -1,12 +1,14 @@
-# Smart Greenhouse — database
+# Smart Greenhouse
 
-Local Postgres for irrigation readings, watering events, and per-bed settings.
+Local Postgres plus a TypeScript Express API (pnpm + tsx) for irrigation readings, watering decisions, and per-bed settings.
 
 ## Setup
 
 ```bash
 cp .env.example .env   # edit credentials if you want
 ./scripts/dev.sh up
+cd backend && pnpm install
+pnpm start             # http://127.0.0.1:3000
 ```
 
 ## Commands
@@ -37,19 +39,9 @@ Or: `./scripts/dev.sh psql`
 
 ## API
 
-TypeScript Express app in `backend/` (run with `tsx`). Server owns decisions and enqueues water into durable `pending_actions`; the Pi polls `GET /actions`, which claims rows into `watering_events`. A future web UI changes settings and calls `POST /water`; it never talks to GPIO.
+TypeScript Express app in `backend/` (`pnpm` + `tsx`). Server owns decisions and enqueues water into durable `pending_actions`; the Pi polls `GET /actions`, which claims rows into `watering_events`. A future web UI changes settings and calls `POST /water`; it never talks to GPIO.
 
-### Run the API
-
-```bash
-./scripts/dev.sh up          # Postgres
-cd backend && pnpm install
-pnpm start                   # http://127.0.0.1:3000
-pnpm dev                     # watch mode
-pnpm typecheck               # tsc --noEmit
-```
-
-Optional: copy `backend/.env.example` → `backend/.env` (defaults already match the DB).
+In `backend/`: `pnpm start`, `pnpm dev` (watch), `pnpm typecheck`. Optional: copy `backend/.env.example` → `backend/.env` (defaults already match the DB).
 
 One Pi process; per-bed settings, watering, and read timers. Batch `POST /readings` only when several beds are due together.
 
