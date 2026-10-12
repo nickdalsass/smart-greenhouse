@@ -37,32 +37,126 @@ postgresql://greenhouse:greenhouse@127.0.0.1:5432/greenhouse
 
 Or: `./scripts/dev.sh psql`
 
+## Web (R3F shell)
+
+```bash
+cd web && pnpm install && pnpm dev
+```
+
+Placeholder 3D greenhouse in `web/src/scene/`. Drop a Blender `.glb` at `web/public/models/greenhouse.glb` and flip `USE_GLB` in `GreenhouseScene.tsx`. Vite proxies `/api` → `http://127.0.0.1:3000`.
+
 ## API
 
 TypeScript Express app in `backend/` (`pnpm` + `tsx`). Server owns decisions and enqueues water into durable `pending_actions`; the Pi polls `GET /actions`, which claims rows into `watering_events`. A future web UI changes settings and calls `POST /water`; it never talks to GPIO.
 
-In `backend/`: `pnpm start`, `pnpm dev` (watch), `pnpm typecheck`. Optional: copy `backend/.env.example` → `backend/.env` (defaults already match the DB).
+In `backend/`: `pnpm start`, `pnpm dev` (watch), `pnpm typecheck`. Optional: copy `backend/.env.example` → `backend/.env` (defaults already match the DB). API listens on `0.0.0.0:3000` by default so a Pi on the LAN can connect (`HOST=127.0.0.1` for local-only).
+
+## Pi setup
+
+Assumes on the Pi:
+
+- App dir `/srv/greenhouseapp/` (mode `700`, owner `greenhouseapp:greenhouseapp`)
+- System user `greenhouseapp` (no login password)
+- Admin user `greenhousedev` (sudo)
+- Groups `i2c` and `gpio` available for later sensors (service adds them as supplementary groups)
+
+### 1. API on the Mac (or host)
+
+```bash
+./scripts/dev.sh up
+cd backend && pnpm start   # listens on 0.0.0.0:3000
+```
+
+Note your Mac’s LAN IP (e.g. `ipconfig getifaddr en0`).
+
+### 2. Copy files to the Pi
+
+From the Mac (as `greenhousedev`):
+
+```bash
+scp pi/stub.py pi/requirements.txt pi/greenhouseapp.service pi/greenhouseapp.env.example \
+  greenhousedev@<pi-host>:~/
+```
+
+On the Pi:
+
+```bash
+sudo mkdir -p /srv/greenhouseapp
+sudo mv ~/stub.py ~/requirements.txt /srv/greenhouseapp/
+sudo chown -R greenhouseapp:greenhouseapp /srv/greenhouseapp
+sudo chmod 700 /srv/greenhouseapp
+```
+
+### 3. venv + deps
+
+Still on the Pi as `greenhousedev`:
+
+```bash
+sudo apt update
+sudo apt install -y python3-venv python3-pip
+
+sudo -u greenhouseapp python3 -m venv /srv/greenhouseapp/.venv
+sudo -u greenhouseapp /srv/greenhouseapp/.venv/bin/pip install --upgrade pip
+sudo -u greenhouseapp /srv/greenhouseapp/.venv/bin/pip install -r /srv/greenhouseapp/requirements.txt
+```
+
+(`requirements.txt` is empty for now — the stub is stdlib-only. Add GPIO/I2C packages there later.)
+
+Ensure `greenhouseapp` can use hardware later:
+
+```bash
+sudo usermod -aG i2c,gpio greenhouseapp
+```
+
+### 4. Env file for the service
+
+```bash
+sudo cp ~/greenhouseapp.env.example /etc/greenhouseapp.env
+sudo nano /etc/greenhouseapp.env   # set API_URL=http://<mac-lan-ip>:3000
+sudo chown root:greenhouseapp /etc/greenhouseapp.env
+sudo chmod 640 /etc/greenhouseapp.env
+```
+
+### 5. systemd unit (start on boot as `greenhouseapp`)
+
+```bash
+sudo cp ~/greenhouseapp.service /etc/systemd/system/greenhouseapp.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now greenhouseapp.service
+sudo systemctl status greenhouseapp.service
+journalctl -u greenhouseapp.service -f
+```
+
+Useful controls: `sudo systemctl restart greenhouseapp` / `stop` / `disable`.
+
+### Pi stub behavior
+
+[`pi/stub.py`](pi/stub.py) fakes sensors, posts readings, **leases** actions via `GET /actions`, simulates watering (sleep; no GPIO yet), then **`POST /actions/complete`**. Only then is a `watering_events` row written. Defaults: `READ_MS=60000`, `POLL_MS=30000`. Use `STUB_WATER_CAP_S=5` in the env file so demos don’t sleep a full 120s; omit the cap when valves are real.
+
+After updating `stub.py` on the Pi: copy it to `/srv/greenhouseapp/`, `chown`, `sudo systemctl restart greenhouseapp`.
 
 One Pi process; per-bed settings, watering, and read timers. Batch `POST /readings` only when several beds are due together.
 
 ```text
-Pi  --POST /readings-->  API  -->  DB
-UI  --POST /water------>  API  -->  enqueue
-UI  --PATCH settings--->  API
-Pi  --GET /actions----->  pending actions --> valves
+Pi  --POST /readings-------->  API  -->  DB
+UI  --POST /water----------->  API  -->  pending_actions
+Pi  --GET /actions----------->  lease pending (claimed_at)
+Pi  -- valves / stub sleep ->
+Pi  --POST /actions/complete->  watering_events + delete pending
 ```
 
 ### Endpoints
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| `POST` | `/readings` | Ingest samples for one or more beds; run auto rules; enqueue water if needed |
-| `POST` | `/water` | Manual water for specified bed(s) — immediate enqueue |
-| `GET` | `/actions` | Pi short-poll (e.g. 10–30s); claim pending actions |
+| `POST` | `/readings` | Ingest samples; auto-enqueue if needed |
+| `POST` | `/water` | Manual enqueue (overrides pending auto) |
+| `GET` | `/actions` | Lease unclaimed/stale pending actions (no event yet) |
+| `POST` | `/actions/complete` | Pi confirms water ran → write `watering_events` |
 | `GET` | `/beds` | List beds (UI later) |
 | `GET`/`PATCH` | `/beds/{id}/settings` | Read/update thresholds (UI later) |
 
-Out of scope for v1: WebSockets/MQTT, watering ack/confirm, auth (optional shared secret later), a separate commands service.
+Out of scope for v1: WebSockets/MQTT, auth (optional shared secret later).
 
 ### `POST /readings`
 
@@ -91,19 +185,37 @@ Sensor fields are nullable (same as `db/schema.sql`). Response is `{ "accepted":
 { "bed_ids": [2, 3], "duration_s": 90 }
 ```
 
-`duration_s` is optional; default each bed’s `settings.max_duration_s` (never above that max). Manual always proceeds — no `min_interval_min` check — and **replaces** any pending auto for that bed (`trigger = 'manual'`).
+`duration_s` is optional; default each bed’s `settings.max_duration_s` (never above that max). Manual always proceeds — no `min_interval_min` check — and **replaces** any pending/leased row for that bed (`trigger = 'manual'`, `claimed_at` cleared).
 
-### `GET /actions`
+### `GET /actions` (lease)
+
+Sets `claimed_at` on eligible rows. Does **not** write `watering_events`. Reclaims leases older than `max(2 * duration_s, 60)` seconds if the Pi never completed.
 
 ```json
 {
   "actions": [
-    { "bed_id": 2, "water_for_s": 90 }
+    { "id": "1", "bed_id": 2, "water_for_s": 90 }
   ]
 }
 ```
 
-Empty `actions` when nothing is pending. Delivery only — the Pi does not care whether the enqueue was auto or manual. Claim deletes `pending_actions` and inserts `watering_events` in one transaction.
+### `POST /actions/complete` (confirm)
+
+Pi reports what actually ran. API inserts `watering_events` and deletes those pending rows. Unknown ids are ignored (idempotent retries).
+
+```json
+{
+  "completions": [
+    {
+      "id": "1",
+      "started_at": "2026-10-12T15:00:00.000Z",
+      "duration_s": 90
+    }
+  ]
+}
+```
+
+Response: `{ "completed": 1, "unknown_ids": [] }`.
 
 ### Curl smoke test
 
@@ -113,15 +225,25 @@ curl -s -X POST http://127.0.0.1:3000/readings \
   -H 'content-type: application/json' \
   -d '{"readings":[{"bed_id":1,"soil_moisture":20}]}'
 
+# lease (note the id) — pending stays until complete
 curl -s http://127.0.0.1:3000/actions
 
-# manual (overrides pending auto on same bed)
-curl -s -X POST http://127.0.0.1:3000/water \
+curl -s -X POST http://127.0.0.1:3000/actions/complete \
   -H 'content-type: application/json' \
-  -d '{"bed_ids":[1],"duration_s":90}'
-
-curl -s http://127.0.0.1:3000/actions
+  -d '{"completions":[{"id":"1","started_at":"2026-10-12T15:00:00Z","duration_s":5}]}'
 ```
+
+### Existing DB migration
+
+If the DB was created before `claimed_at` existed:
+
+```bash
+source .env
+docker compose exec -T greenhouse-db \
+  psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" < db/migrate_pending_claimed_at.sql
+```
+
+Or `./scripts/dev.sh reset` (wipes data).
 
 ### Pi scheduling (per-bed clocks)
 
@@ -134,4 +256,4 @@ curl -s http://127.0.0.1:3000/actions
 
 ### Database
 
-Tables: `beds`, `readings`, `watering_events`, `settings`, `pending_actions` (one pending row per bed, durable across API restarts).
+Tables: `beds`, `readings`, `watering_events` (completed water only), `settings`, `pending_actions` (one row per bed; `claimed_at` = lease).
