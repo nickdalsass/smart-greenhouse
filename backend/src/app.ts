@@ -1,6 +1,13 @@
 import express from "express";
+import morgan from "morgan";
 import pool from "./db.js";
-import { claimActions, enqueueAuto, enqueueManual } from "./queue.js";
+import {
+  claimActions,
+  completeActions,
+  enqueueAuto,
+  enqueueManual,
+  type CompletionIn,
+} from "./queue.js";
 
 type ReadingIn = {
   bed_id: number;
@@ -18,13 +25,14 @@ type SettingsRow = {
 
 const app = express();
 app.use(express.json());
+app.use(morgan("dev"));
 
 app.post("/readings", async (req, res) => {
   const readings = req.body?.readings as ReadingIn[] | undefined;
   if (!Array.isArray(readings) || readings.length === 0) {
     return res
       .status(400)
-      .json({ error: "readings must be a non-empty array" });
+      .json({ error: "Readings must be a non-empty array" });
   }
 
   const recordedAt = (req.body.recorded_at as string | undefined) ?? null;
@@ -36,7 +44,7 @@ app.post("/readings", async (req, res) => {
     for (const r of readings) {
       if (r.bed_id == null) {
         await client.query("ROLLBACK");
-        return res.status(400).json({ error: "each reading needs bed_id" });
+        return res.status(400).json({ error: "Each reading needs bed_id" });
       }
 
       await client.query(
@@ -149,6 +157,30 @@ app.get("/actions", async (_req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "failed to claim actions" });
+  } finally {
+    client.release();
+  }
+});
+
+app.post("/actions/complete", async (req, res) => {
+  const completions = req.body?.completions as CompletionIn[] | undefined;
+  if (!Array.isArray(completions) || completions.length === 0) {
+    return res
+      .status(400)
+      .json({ error: "completions must be a non-empty array" });
+  }
+
+  const client = await pool.connect();
+  try {
+    const result = await completeActions(client, completions);
+    res.json(result);
+  } catch (err) {
+    const status = (err as { status?: number }).status ?? 500;
+    if (status !== 500) {
+      return res.status(status).json({ error: (err as Error).message });
+    }
+    console.error(err);
+    res.status(500).json({ error: "failed to complete actions" });
   } finally {
     client.release();
   }
