@@ -1,0 +1,23 @@
+[Unit]
+Description=Smart Greenhouse Pi stub (readings + action poll)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=greenhouseapp
+Group=greenhouseapp
+SupplementaryGroups=i2c gpio
+WorkingDirectory=/srv/greenhouseapp
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=-/etc/greenhouseapp.env
+ExecStart=/srv/greenhouseapp/.venv/bin/python -u /srv/greenhouseapp/stub.py
+Restart=on-failure
+RestartSec=5
+
+# Hardening (keep simple; tighten later if needed)
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

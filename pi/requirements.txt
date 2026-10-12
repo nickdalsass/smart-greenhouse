@@ -1,0 +1,3 @@
+# Stub uses stdlib only. Add sensor/GPIO packages here later, e.g.:
+# gpiozero
+# smbus2
