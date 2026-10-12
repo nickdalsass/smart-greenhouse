@@ -34,8 +34,12 @@ CREATE TABLE pending_actions (
   bed_id integer NOT NULL UNIQUE REFERENCES beds (id),
   duration_s integer NOT NULL CHECK (duration_s > 0),
   trigger text NOT NULL CHECK (trigger IN ('auto', 'manual')),
-  created_at timestamptz NOT NULL DEFAULT now()
+  created_at timestamptz NOT NULL DEFAULT now(),
+  -- null = waiting for Pi; set on GET /actions lease; cleared when manual replaces
+  claimed_at timestamptz
 );
+
+CREATE INDEX pending_actions_claimed_at_idx ON pending_actions (claimed_at);
 
 CREATE INDEX readings_bed_id_recorded_at_desc_idx
   ON readings (bed_id, recorded_at DESC);
