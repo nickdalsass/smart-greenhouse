@@ -265,47 +265,47 @@ export default function App() {
           const key = bedKeyFor(id);
           if (key) setView(key);
         }}
-      />
-
-      <div className="tool-rail" role="toolbar" aria-label="Scene controls">
-        <ToolButton
-          label="Labels"
-          active={showLabels}
-          onClick={() => setShowLabels((v) => !v)}
-        >
-          <Tags size={18} strokeWidth={1.75} />
-        </ToolButton>
-        <ToolButton
-          label="Roof"
-          active={showRoof && !inBed}
-          disabled={insideLike}
-          onClick={() => setShowRoof((v) => !v)}
-        >
-          <House size={18} strokeWidth={1.75} />
-        </ToolButton>
-        <ToolButton
-          label={view === "outside" ? "Inside" : inBed ? "Inside" : "Outside"}
-          active={insideLike}
-          onClick={() => {
-            if (view === "outside") setView("inside");
-            else if (inBed) setView("inside");
-            else setView("outside");
-          }}
-        >
-          {view === "inside" ? (
-            <DoorClosed size={18} strokeWidth={1.75} />
-          ) : (
-            <DoorOpen size={18} strokeWidth={1.75} />
-          )}
-        </ToolButton>
-        <ToolButton
-          label="Water"
-          active={watering}
-          onClick={() => setWatering((v) => !v)}
-        >
-          <Droplets size={18} strokeWidth={1.75} />
-        </ToolButton>
-      </div>
+      >
+        <div className="tool-rail" role="toolbar" aria-label="Scene controls">
+          <ToolButton
+            label="Labels"
+            active={showLabels}
+            onClick={() => setShowLabels((v) => !v)}
+          >
+            <Tags size={18} strokeWidth={1.75} />
+          </ToolButton>
+          <ToolButton
+            label="Roof"
+            active={showRoof && !inBed}
+            disabled={insideLike}
+            onClick={() => setShowRoof((v) => !v)}
+          >
+            <House size={18} strokeWidth={1.75} />
+          </ToolButton>
+          <ToolButton
+            label={view === "outside" ? "Inside" : inBed ? "Inside" : "Outside"}
+            active={insideLike}
+            onClick={() => {
+              if (view === "outside") setView("inside");
+              else if (inBed) setView("inside");
+              else setView("outside");
+            }}
+          >
+            {view === "inside" ? (
+              <DoorClosed size={18} strokeWidth={1.75} />
+            ) : (
+              <DoorOpen size={18} strokeWidth={1.75} />
+            )}
+          </ToolButton>
+          <ToolButton
+            label="Water"
+            active={watering}
+            onClick={() => setWatering((v) => !v)}
+          >
+            <Droplets size={18} strokeWidth={1.75} />
+          </ToolButton>
+        </div>
+      </Overlay>
     </div>
   );
 }

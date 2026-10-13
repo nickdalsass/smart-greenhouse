@@ -10,10 +10,9 @@ export function Label({
   show: boolean;
 }) {
   if (!show) return null;
-  // No distanceFactor — fixed screen size so labels don't blow up up close
   return (
     <Html position={position} center style={{ pointerEvents: "none" }}>
-      <div className="scene-label">{children}</div>
+      <span className="scene-label">{children}</span>
     </Html>
   );
 }

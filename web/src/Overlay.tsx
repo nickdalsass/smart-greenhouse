@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import {
   MOCK_BEDS,
   MOCK_UPDATED_AT,
@@ -26,9 +27,10 @@ function climateRows(bed: BedSnapshot | undefined) {
 type Props = {
   selectedBed: number | null;
   onSelectBed?: (bedId: number) => void;
+  children?: ReactNode;
 };
 
-export function Overlay({ selectedBed, onSelectBed }: Props) {
+export function Overlay({ selectedBed, onSelectBed, children }: Props) {
   const focus =
     selectedBed != null
       ? MOCK_BEDS.find((b) => b.bedId === selectedBed)
@@ -38,14 +40,17 @@ export function Overlay({ selectedBed, onSelectBed }: Props) {
   return (
     <div className="overlay">
       <header className="chrome-top">
-        <div className="brand">
-          <p className="brand-mark">Smart Greenhouse</p>
-          <p className="brand-sub">
-            {focus ? focus.name : "Live environment"}
-            {!focus && (
-              <span className="live-dot" aria-label="Live" title="Live" />
-            )}
-          </p>
+        <div className="chrome-lead">
+          <div className="brand">
+            <p className="brand-mark">Smart Greenhouse</p>
+            <p className="brand-sub">
+              {focus ? focus.name : "Live environment"}
+              {!focus && (
+                <span className="live-dot" aria-label="Live" title="Live" />
+              )}
+            </p>
+          </div>
+          {children}
         </div>
 
         <dl className="climate">
