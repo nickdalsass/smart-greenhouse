@@ -11,23 +11,23 @@ export type BedSnapshot = {
 export const MOCK_BEDS: BedSnapshot[] = [
   {
     bedId: 1,
-    name: "Bed 1",
-    soilMoisture: 27.4,
-    temperature: 22.1,
-    humidity: 61.0,
-    light: 420,
-  },
-  {
-    bedId: 2,
-    name: "Bed 2",
+    name: "Left bed",
     soilMoisture: 34.8,
     temperature: 21.6,
     humidity: 58.2,
     light: 395,
   },
   {
+    bedId: 2,
+    name: "Back bed",
+    soilMoisture: 27.4,
+    temperature: 22.1,
+    humidity: 61.0,
+    light: 420,
+  },
+  {
     bedId: 3,
-    name: "Bed 3",
+    name: "Right bed",
     soilMoisture: 19.2,
     temperature: 22.8,
     humidity: 64.5,

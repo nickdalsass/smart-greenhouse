@@ -3,37 +3,53 @@ import {
   MOCK_UPDATED_AT,
   formatUpdatedAt,
   greenhouseAverages,
+  type BedSnapshot,
 } from "./mockData";
 
 const avg = greenhouseAverages(MOCK_BEDS);
 
-const CLIMATE = [
-  { key: "temp", label: "Temp", value: avg.temperature.toFixed(1), unit: "°C" },
-  { key: "humidity", label: "Humidity", value: avg.humidity.toFixed(0), unit: "%" },
-  { key: "moisture", label: "Soil", value: avg.soilMoisture.toFixed(1), unit: "%" },
-  { key: "light", label: "Light", value: avg.light.toFixed(0), unit: "lx" },
-] as const;
+function climateRows(bed: BedSnapshot | undefined) {
+  const src = bed ?? {
+    temperature: avg.temperature,
+    humidity: avg.humidity,
+    soilMoisture: avg.soilMoisture,
+    light: avg.light,
+  };
+  return [
+    { key: "temp", label: "Temp", value: src.temperature.toFixed(1), unit: "°C" },
+    { key: "humidity", label: "Humidity", value: src.humidity.toFixed(0), unit: "%" },
+    { key: "moisture", label: "Soil", value: src.soilMoisture.toFixed(1), unit: "%" },
+    { key: "light", label: "Light", value: src.light.toFixed(0), unit: "lx" },
+  ] as const;
+}
 
 type Props = {
   selectedBed: number | null;
+  onSelectBed?: (bedId: number) => void;
 };
 
-export function Overlay({ selectedBed }: Props) {
+export function Overlay({ selectedBed, onSelectBed }: Props) {
   const focus =
     selectedBed != null
       ? MOCK_BEDS.find((b) => b.bedId === selectedBed)
       : undefined;
+  const climate = climateRows(focus);
 
   return (
     <div className="overlay">
       <header className="chrome-top">
         <div className="brand">
           <p className="brand-mark">Smart Greenhouse</p>
-          <p className="brand-sub">Live environment</p>
+          <p className="brand-sub">
+            {focus ? focus.name : "Live environment"}
+            {!focus && (
+              <span className="live-dot" aria-label="Live" title="Live" />
+            )}
+          </p>
         </div>
 
         <dl className="climate">
-          {CLIMATE.map((m) => (
+          {climate.map((m) => (
             <div key={m.key} className="climate-item">
               <dt>{m.label}</dt>
               <dd>
@@ -45,31 +61,26 @@ export function Overlay({ selectedBed }: Props) {
         </dl>
       </header>
 
-      <div className="chrome-mid">
-        {focus && (
-          <p className="focus-line">
-            <span>{focus.name}</span>
-            {focus.temperature.toFixed(1)}°C · {focus.humidity.toFixed(0)}% RH ·{" "}
-            {focus.light.toFixed(0)} lx · {focus.soilMoisture.toFixed(0)}% soil
-          </p>
-        )}
-      </div>
+      <div className="chrome-mid" />
 
       <footer className="chrome-bottom">
         <ul className="beds">
           {MOCK_BEDS.map((bed) => (
-            <li
-              key={bed.bedId}
-              className={
-                selectedBed === bed.bedId ? "bed is-active" : "bed"
-              }
-            >
-              <span className="bed-name">{bed.name}</span>
-              <span className="bed-moisture">
-                {bed.soilMoisture.toFixed(1)}
-                <em>%</em>
-              </span>
-              <span className="bed-caption">moisture</span>
+            <li key={bed.bedId}>
+              <button
+                type="button"
+                className={
+                  selectedBed === bed.bedId ? "bed is-active" : "bed"
+                }
+                onClick={() => onSelectBed?.(bed.bedId)}
+              >
+                <span className="bed-name">{bed.name}</span>
+                <span className="bed-moisture">
+                  {bed.soilMoisture.toFixed(1)}
+                  <em>%</em>
+                </span>
+                <span className="bed-caption">moisture</span>
+              </button>
             </li>
           ))}
         </ul>
