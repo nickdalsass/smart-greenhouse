@@ -37,13 +37,13 @@ postgresql://greenhouse:greenhouse@127.0.0.1:5432/greenhouse
 
 Or: `./scripts/dev.sh psql`
 
-## Web (R3F shell)
+## Web (R3F)
 
 ```bash
 cd web && pnpm install && pnpm dev
 ```
 
-Placeholder 3D greenhouse in `web/src/scene/`. Drop a Blender `.glb` at `web/public/models/greenhouse.glb` and flip `USE_GLB` in `GreenhouseScene.tsx`. Vite proxies `/api` → `http://127.0.0.1:3000`.
+Vite + React Three Fiber. `App.tsx` mounts a `<Canvas>`; `greenhouse/Greenhouse.tsx` composes the scene from small groups (structure, beds, plants, electronics, wires, water, ground). Units are inches; layout lives in `greenhouse/config.ts`. Overlay UI sits on top; bed views / watering are local state for now. Vite proxies `/api` → `http://127.0.0.1:3000`.
 
 ## API
 
