@@ -27,6 +27,7 @@ type Props = {
   updatedAt: Date | null;
   selectedBed: number | null;
   onSelectBed?: (bedId: number) => void;
+  onResetView?: () => void;
   children?: ReactNode;
 };
 
@@ -35,6 +36,7 @@ export function Overlay({
   updatedAt,
   selectedBed,
   onSelectBed,
+  onResetView,
   children,
 }: Props) {
   const [, setTick] = useState(0);
@@ -57,7 +59,14 @@ export function Overlay({
       <header className="chrome-top">
         <div className="chrome-lead">
           <div className="brand">
-            <p className="brand-mark">Smart Greenhouse</p>
+            <button
+              type="button"
+              className="brand-mark"
+              onClick={onResetView}
+              title="Reset view"
+            >
+              Smart Greenhouse
+            </button>
             <p className="brand-sub">
               {focus ? focus.name : "Live environment"}
               {!focus && (

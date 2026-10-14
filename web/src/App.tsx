@@ -88,7 +88,15 @@ type OrbitLike = {
   update: () => void;
 };
 
-function ViewRig({ view, enabled }: { view: SceneView; enabled: boolean }) {
+function ViewRig({
+  view,
+  resetKey,
+  enabled,
+}: {
+  view: SceneView;
+  resetKey: number;
+  enabled: boolean;
+}) {
   const camera = useThree((s) => s.camera);
   const invalidate = useThree((s) => s.invalidate);
   const controls = useThree((s) => s.controls) as OrbitLike | null;
@@ -107,7 +115,7 @@ function ViewRig({ view, enabled }: { view: SceneView; enabled: boolean }) {
       controls.update();
     }
     invalidate();
-  }, [view, enabled, camera, controls, invalidate]);
+  }, [view, resetKey, enabled, camera, controls, invalidate]);
 
   return null;
 }
@@ -210,6 +218,7 @@ function GreenhouseApp({ onLogout }: { onLogout: () => void }) {
   const [showLabels, setShowLabels] = useState(false);
   const [showRoof, setShowRoof] = useState(true);
   const [view, setView] = useState<SceneView>("outside");
+  const [viewResetKey, setViewResetKey] = useState(0);
   const [watering, setWatering] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
   const [introDone, setIntroDone] = useState(false);
@@ -333,7 +342,7 @@ function GreenhouseApp({ onLogout }: { onLogout: () => void }) {
             minPolarAngle={preset.minPolarAngle}
             maxPolarAngle={preset.maxPolarAngle}
           />
-          <ViewRig view={view} enabled={introDone} />
+          <ViewRig view={view} resetKey={viewResetKey} enabled={introDone} />
           <InvalidateOnToggle
             showLabels={showLabels}
             showRoof={showRoof}
@@ -347,6 +356,10 @@ function GreenhouseApp({ onLogout }: { onLogout: () => void }) {
         beds={beds}
         updatedAt={updatedAt}
         selectedBed={selectedBed}
+        onResetView={() => {
+          setView("outside");
+          setViewResetKey((n) => n + 1);
+        }}
         onSelectBed={(id) => {
           if (selectedBed === id) {
             setView("inside");
