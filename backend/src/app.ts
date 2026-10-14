@@ -1,5 +1,13 @@
 import express from "express";
 import morgan from "morgan";
+import {
+  loginHandler,
+  logoutHandler,
+  meHandler,
+  requirePiToken,
+  requireSession,
+  signupHandler,
+} from "./auth.js";
 import pool from "./db.js";
 import {
   claimActions,
@@ -27,8 +35,13 @@ const app = express();
 app.use(express.json());
 app.use(morgan("dev"));
 
+app.post("/login", (req, res) => void loginHandler(req, res));
+app.post("/signup", (req, res) => void signupHandler(req, res));
+app.post("/logout", logoutHandler);
+app.get("/me", (req, res) => void meHandler(req, res));
+
 /** List beds + settings (for UI). */
-app.get("/beds", async (_req, res) => {
+app.get("/beds", requireSession, async (_req, res) => {
   try {
     const { rows } = await pool.query<{
       id: number;
@@ -61,7 +74,7 @@ app.get("/beds", async (_req, res) => {
 });
 
 /** Latest reading per bed (for overlay). */
-app.get("/status", async (_req, res) => {
+app.get("/status", requireSession, async (_req, res) => {
   try {
     const { rows } = await pool.query<{
       id: number;
@@ -107,7 +120,7 @@ app.get("/status", async (_req, res) => {
   }
 });
 
-app.post("/readings", async (req, res) => {
+app.post("/readings", requirePiToken, async (req, res) => {
   const readings = req.body?.readings as ReadingIn[] | undefined;
   if (!Array.isArray(readings) || readings.length === 0) {
     return res
@@ -184,7 +197,7 @@ app.post("/readings", async (req, res) => {
   }
 });
 
-app.post("/water", async (req, res) => {
+app.post("/water", requireSession, async (req, res) => {
   const bedIds = req.body?.bed_ids as number[] | undefined;
   if (!Array.isArray(bedIds) || bedIds.length === 0) {
     return res.status(400).json({ error: "bed_ids must be a non-empty array" });
@@ -229,7 +242,7 @@ app.post("/water", async (req, res) => {
   }
 });
 
-app.get("/actions", async (_req, res) => {
+app.get("/actions", requirePiToken, async (_req, res) => {
   const client = await pool.connect();
   try {
     const result = await claimActions(client);
@@ -242,7 +255,7 @@ app.get("/actions", async (_req, res) => {
   }
 });
 
-app.post("/actions/complete", async (req, res) => {
+app.post("/actions/complete", requirePiToken, async (req, res) => {
   const completions = req.body?.completions as CompletionIn[] | undefined;
   if (!Array.isArray(completions) || completions.length === 0) {
     return res

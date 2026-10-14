@@ -1,3 +1,10 @@
+CREATE TABLE accounts (
+  id serial PRIMARY KEY,
+  greenhouse_name text NOT NULL UNIQUE,
+  password_hash text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
 CREATE TABLE beds (
   id serial PRIMARY KEY,
   name text NOT NULL UNIQUE

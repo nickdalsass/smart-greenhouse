@@ -49,7 +49,22 @@ Vite + React Three Fiber. `App.tsx` mounts a `<Canvas>`; `greenhouse/Greenhouse.
 
 TypeScript Express app in `backend/` (`pnpm` + `tsx`). Server owns decisions and enqueues water into durable `pending_actions`; the Pi polls `GET /actions`, which claims rows into `watering_events`. A future web UI changes settings and calls `POST /water`; it never talks to GPIO.
 
-In `backend/`: `pnpm start`, `pnpm dev` (watch), `pnpm typecheck`. Optional: copy `backend/.env.example` → `backend/.env` (defaults already match the DB). API listens on `0.0.0.0:3000` by default so a Pi on the LAN can connect (`HOST=127.0.0.1` for local-only).
+In `backend/`: `pnpm start`, `pnpm dev` (watch), `pnpm typecheck`. Copy `backend/.env.example` → `backend/.env` and set `SESSION_SECRET` + `API_TOKEN` (dev placeholders are fine locally). API listens on `0.0.0.0:3000` by default so a Pi on the LAN can connect (`HOST=127.0.0.1` for local-only).
+
+### Auth
+
+- **Web:** greenhouse name + password → httpOnly session cookie. UI and human routes (`/beds`, `/status`, `/water`) require a session.
+- **Pi:** `Authorization: Bearer $API_TOKEN` on `/readings`, `/actions`, `/actions/complete`.
+- **Accounts** live in Postgres (`accounts`). Create one (or two):
+
+```bash
+# apply migrate if the DB already existed before accounts:
+#   docker compose exec -T greenhouse-db psql -U greenhouse -d greenhouse < db/migrate_accounts.sql
+cd backend
+pnpm create-account "My Greenhouse" 'your-password'
+```
+
+Export `DATABASE_URL` (or rely on the default in `db.ts`) when running `create-account`.
 
 ## Pi setup
 
@@ -112,7 +127,7 @@ sudo usermod -aG i2c,gpio greenhouseapp
 
 ```bash
 sudo cp ~/greenhouseapp.env.example /etc/greenhouseapp.env
-sudo nano /etc/greenhouseapp.env   # set API_URL=http://<mac-lan-ip>:3000
+sudo nano /etc/greenhouseapp.env   # set API_URL=http://<mac-lan-ip>:3000 and API_TOKEN
 sudo chown root:greenhouseapp /etc/greenhouseapp.env
 sudo chmod 640 /etc/greenhouseapp.env
 ```
@@ -147,17 +162,21 @@ Pi  --POST /actions/complete->  watering_events + delete pending
 
 ### Endpoints
 
-| Method | Path | Purpose |
-|--------|------|---------|
-| `POST` | `/readings` | Ingest samples; auto-enqueue if needed |
-| `POST` | `/water` | Manual enqueue (overrides pending auto) |
-| `GET` | `/actions` | Lease unclaimed/stale pending actions (no event yet) |
-| `POST` | `/actions/complete` | Pi confirms water ran → write `watering_events` |
-| `GET` | `/beds` | List beds + settings |
-| `GET` | `/status` | Latest reading per bed (web overlay) |
-| `GET`/`PATCH` | `/beds/{id}/settings` | Read/update thresholds (settings UI later) |
+| Method | Path | Auth | Purpose |
+|--------|------|------|---------|
+| `POST` | `/login` | — | Greenhouse name + password → session cookie |
+| `POST` | `/signup` | — | Create account + session cookie |
+| `POST` | `/logout` | — | Clear session cookie |
+| `GET` | `/me` | cookie | Current account |
+| `POST` | `/readings` | Bearer | Ingest samples; auto-enqueue if needed |
+| `POST` | `/water` | cookie | Manual enqueue (overrides pending auto) |
+| `GET` | `/actions` | Bearer | Lease unclaimed/stale pending actions (no event yet) |
+| `POST` | `/actions/complete` | Bearer | Pi confirms water ran → write `watering_events` |
+| `GET` | `/beds` | cookie | List beds + settings |
+| `GET` | `/status` | cookie | Latest reading per bed (web overlay) |
+| `GET`/`PATCH` | `/beds/{id}/settings` | cookie | Read/update thresholds (settings UI later) |
 
-Out of scope for v1: WebSockets/MQTT, auth (optional shared secret later).
+Out of scope for v1: WebSockets/MQTT, OAuth.
 
 ### `POST /readings`
 

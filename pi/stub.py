@@ -3,8 +3,8 @@
 
   API_URL=http://<mac-lan-ip>:3000 python3 stub.py
 
-Env: API_URL, READ_MS (default 60000), POLL_MS (default 30000),
-     STUB_WATER_CAP_S (optional) — cap sleep for demos; omit for full duration.
+Env: API_URL, API_TOKEN (Bearer for Pi routes), READ_MS (default 60000),
+     POLL_MS (default 30000), STUB_WATER_CAP_S (optional) — cap sleep for demos.
 """
 
 from __future__ import annotations
@@ -18,6 +18,7 @@ import urllib.request
 from datetime import datetime, timezone
 
 API_URL = os.environ.get("API_URL", "http://127.0.0.1:3000").rstrip("/")
+API_TOKEN = os.environ.get("API_TOKEN", "")
 READ_MS = int(os.environ.get("READ_MS", "60000"))
 POLL_MS = int(os.environ.get("POLL_MS", "30000"))
 _cap = os.environ.get("STUB_WATER_CAP_S")
@@ -40,11 +41,16 @@ def fake_reading(bed_id: int) -> dict:
 
 def request_json(method: str, path: str, body: dict | None = None) -> dict:
     data = None if body is None else json.dumps(body).encode()
+    headers: dict[str, str] = {}
+    if body is not None:
+        headers["content-type"] = "application/json"
+    if API_TOKEN:
+        headers["authorization"] = f"Bearer {API_TOKEN}"
     req = urllib.request.Request(
         f"{API_URL}{path}",
         data=data,
         method=method,
-        headers={"content-type": "application/json"} if body is not None else {},
+        headers=headers,
     )
     try:
         with urllib.request.urlopen(req, timeout=30) as res:

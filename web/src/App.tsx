@@ -8,8 +8,16 @@ import {
 } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, OrbitControls } from "@react-three/drei";
-import { DoorClosed, DoorOpen, Droplets, House, Tags } from "lucide-react";
-import { fetchStatus } from "./api";
+import {
+  DoorClosed,
+  DoorOpen,
+  Droplets,
+  House,
+  LogOut,
+  Settings,
+  Tags,
+} from "lucide-react";
+import { fetchMe, fetchStatus, logout, type Me } from "./api";
 import { Greenhouse } from "./greenhouse/Greenhouse";
 import {
   bedIdFor,
@@ -19,6 +27,7 @@ import {
   type BedKey,
   type SceneView,
 } from "./greenhouse/views";
+import { Login } from "./Login";
 import { BED_LABELS, type BedSnapshot } from "./mockData";
 import { Overlay } from "./Overlay";
 
@@ -37,12 +46,14 @@ function ToolButton({
   label,
   active,
   disabled,
+  showLabel = true,
   onClick,
   children,
 }: {
   label: string;
   active: boolean;
   disabled?: boolean;
+  showLabel?: boolean;
   onClick: () => void;
   children: ReactNode;
 }) {
@@ -57,7 +68,7 @@ function ToolButton({
       onClick={onClick}
     >
       {children}
-      <span className="tool-btn-label">{label}</span>
+      {showLabel && <span className="tool-btn-label">{label}</span>}
     </button>
   );
 }
@@ -164,6 +175,38 @@ function InvalidateOnToggle({
 }
 
 export default function App() {
+  const [account, setAccount] = useState<Me | null | undefined>(undefined);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchMe()
+      .then((me) => {
+        if (!cancelled) setAccount(me);
+      })
+      .catch(() => {
+        if (!cancelled) setAccount(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (account === undefined) {
+    return <div className="login login-loading" aria-busy="true" />;
+  }
+  if (account === null) {
+    return <Login onOk={setAccount} />;
+  }
+  return (
+    <GreenhouseApp
+      onLogout={() => {
+        void logout().finally(() => setAccount(null));
+      }}
+    />
+  );
+}
+
+function GreenhouseApp({ onLogout }: { onLogout: () => void }) {
   const [showLabels, setShowLabels] = useState(false);
   const [showRoof, setShowRoof] = useState(true);
   const [view, setView] = useState<SceneView>("outside");
@@ -350,6 +393,24 @@ export default function App() {
             onClick={() => setWatering((v) => !v)}
           >
             <Droplets size={18} strokeWidth={1.75} />
+          </ToolButton>
+          <span className="tool-rail-sep" aria-hidden />
+          <ToolButton
+            label="Settings"
+            active={false}
+            showLabel={false}
+            // ponytail: settings panel when PATCH /beds/:id/settings lands
+            onClick={() => undefined}
+          >
+            <Settings size={18} strokeWidth={1.75} />
+          </ToolButton>
+          <ToolButton
+            label="Log out"
+            active={false}
+            showLabel={false}
+            onClick={onLogout}
+          >
+            <LogOut size={18} strokeWidth={1.75} />
           </ToolButton>
         </div>
       </Overlay>
