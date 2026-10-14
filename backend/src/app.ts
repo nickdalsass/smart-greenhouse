@@ -27,6 +27,86 @@ const app = express();
 app.use(express.json());
 app.use(morgan("dev"));
 
+/** List beds + settings (for UI). */
+app.get("/beds", async (_req, res) => {
+  try {
+    const { rows } = await pool.query<{
+      id: number;
+      name: string;
+      moisture_threshold: number;
+      max_duration_s: number;
+      min_interval_min: number;
+    }>(
+      `SELECT b.id, b.name,
+              s.moisture_threshold, s.max_duration_s, s.min_interval_min
+       FROM beds b
+       JOIN settings s ON s.bed_id = b.id
+       ORDER BY b.id`,
+    );
+    res.json({
+      beds: rows.map((r) => ({
+        id: r.id,
+        name: r.name,
+        settings: {
+          moisture_threshold: r.moisture_threshold,
+          max_duration_s: r.max_duration_s,
+          min_interval_min: r.min_interval_min,
+        },
+      })),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "failed to list beds" });
+  }
+});
+
+/** Latest reading per bed (for overlay). */
+app.get("/status", async (_req, res) => {
+  try {
+    const { rows } = await pool.query<{
+      id: number;
+      name: string;
+      soil_moisture: number | null;
+      temperature: number | null;
+      humidity: number | null;
+      light: number | null;
+      recorded_at: Date | null;
+    }>(
+      `SELECT b.id, b.name,
+              r.soil_moisture, r.temperature, r.humidity, r.light, r.recorded_at
+       FROM beds b
+       LEFT JOIN LATERAL (
+         SELECT soil_moisture, temperature, humidity, light, recorded_at
+         FROM readings
+         WHERE bed_id = b.id
+         ORDER BY recorded_at DESC
+         LIMIT 1
+       ) r ON true
+       ORDER BY b.id`,
+    );
+    res.json({
+      beds: rows.map((r) => ({
+        id: r.id,
+        name: r.name,
+        soil_moisture: r.soil_moisture,
+        temperature: r.temperature,
+        humidity: r.humidity,
+        light: r.light,
+        recorded_at: r.recorded_at,
+      })),
+      // Newest reading across all beds (null if none yet)
+      updated_at: rows.reduce<string | null>((best, r) => {
+        if (!r.recorded_at) return best;
+        const iso = new Date(r.recorded_at).toISOString();
+        return best == null || iso > best ? iso : best;
+      }, null),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "failed to load status" });
+  }
+});
+
 app.post("/readings", async (req, res) => {
   const readings = req.body?.readings as ReadingIn[] | undefined;
   if (!Array.isArray(readings) || readings.length === 0) {

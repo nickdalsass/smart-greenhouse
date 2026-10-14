@@ -9,6 +9,7 @@ import {
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, OrbitControls } from "@react-three/drei";
 import { DoorClosed, DoorOpen, Droplets, House, Tags } from "lucide-react";
+import { fetchStatus } from "./api";
 import { Greenhouse } from "./greenhouse/Greenhouse";
 import {
   bedIdFor,
@@ -18,7 +19,19 @@ import {
   type BedKey,
   type SceneView,
 } from "./greenhouse/views";
+import { BED_LABELS, type BedSnapshot } from "./mockData";
 import { Overlay } from "./Overlay";
+
+const STATUS_POLL_MS = 15_000;
+
+const EMPTY_BEDS: BedSnapshot[] = [1, 2, 3].map((id) => ({
+  bedId: id,
+  name: BED_LABELS[id] ?? `Bed ${id}`,
+  soilMoisture: null,
+  temperature: null,
+  humidity: null,
+  light: null,
+}));
 
 function ToolButton({
   label,
@@ -157,9 +170,40 @@ export default function App() {
   const [watering, setWatering] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
   const [introDone, setIntroDone] = useState(false);
+  const [beds, setBeds] = useState<BedSnapshot[]>(EMPTY_BEDS);
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
 
   const onIntroDone = useCallback(() => setIntroDone(true), []);
   const onSceneReady = useCallback(() => setSceneReady(true), []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const pull = async () => {
+      try {
+        const status = await fetchStatus();
+        if (cancelled) return;
+        setBeds(
+          status.beds.map((b) => ({
+            bedId: b.id,
+            name: BED_LABELS[b.id] ?? b.name,
+            soilMoisture: b.soil_moisture,
+            temperature: b.temperature,
+            humidity: b.humidity,
+            light: b.light,
+          })),
+        );
+        setUpdatedAt(status.updated_at ? new Date(status.updated_at) : null);
+      } catch {
+        // API down — keep last good snapshot
+      }
+    };
+    void pull();
+    const id = window.setInterval(pull, STATUS_POLL_MS);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, []);
 
   const preset = presetFor(view);
   const insideLike = view !== "outside";
@@ -172,6 +216,7 @@ export default function App() {
       : ["back", "left", "right"]
     : [];
 
+  // Demo drip animation only — real bed watering will follow Pi/API state
   const liveFrame = watering || (sceneReady && !introDone);
 
   return (
@@ -256,6 +301,8 @@ export default function App() {
       </div>
 
       <Overlay
+        beds={beds}
+        updatedAt={updatedAt}
         selectedBed={selectedBed}
         onSelectBed={(id) => {
           if (selectedBed === id) {

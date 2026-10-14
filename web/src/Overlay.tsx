@@ -1,15 +1,13 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
-  MOCK_BEDS,
-  MOCK_UPDATED_AT,
   formatUpdatedAt,
+  fmt,
   greenhouseAverages,
   type BedSnapshot,
 } from "./mockData";
 
-const avg = greenhouseAverages(MOCK_BEDS);
-
-function climateRows(bed: BedSnapshot | undefined) {
+function climateRows(bed: BedSnapshot | undefined, beds: BedSnapshot[]) {
+  const avg = greenhouseAverages(beds);
   const src = bed ?? {
     temperature: avg.temperature,
     humidity: avg.humidity,
@@ -17,25 +15,42 @@ function climateRows(bed: BedSnapshot | undefined) {
     light: avg.light,
   };
   return [
-    { key: "temp", label: "Temp", value: src.temperature.toFixed(1), unit: "°C" },
-    { key: "humidity", label: "Humidity", value: src.humidity.toFixed(0), unit: "%" },
-    { key: "moisture", label: "Soil", value: src.soilMoisture.toFixed(1), unit: "%" },
-    { key: "light", label: "Light", value: src.light.toFixed(0), unit: "lx" },
+    { key: "temp", label: "Temp", value: fmt(src.temperature, 1), unit: "°C" },
+    { key: "humidity", label: "Humidity", value: fmt(src.humidity, 0), unit: "%" },
+    { key: "moisture", label: "Soil", value: fmt(src.soilMoisture, 1), unit: "%" },
+    { key: "light", label: "Light", value: fmt(src.light, 0), unit: "lx" },
   ] as const;
 }
 
 type Props = {
+  beds: BedSnapshot[];
+  updatedAt: Date | null;
   selectedBed: number | null;
   onSelectBed?: (bedId: number) => void;
   children?: ReactNode;
 };
 
-export function Overlay({ selectedBed, onSelectBed, children }: Props) {
+export function Overlay({
+  beds,
+  updatedAt,
+  selectedBed,
+  onSelectBed,
+  children,
+}: Props) {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (!updatedAt) return;
+    const id = window.setInterval(() => setTick((n) => n + 1), 1000);
+    return () => window.clearInterval(id);
+  }, [updatedAt]);
+
   const focus =
     selectedBed != null
-      ? MOCK_BEDS.find((b) => b.bedId === selectedBed)
+      ? beds.find((b) => b.bedId === selectedBed)
       : undefined;
-  const climate = climateRows(focus);
+  const climate = climateRows(focus, beds);
+  // Remount values when a new reading lands → CSS fade-in
+  const dataKey = updatedAt?.getTime() ?? 0;
 
   return (
     <div className="overlay">
@@ -57,7 +72,7 @@ export function Overlay({ selectedBed, onSelectBed, children }: Props) {
           {climate.map((m) => (
             <div key={m.key} className="climate-item">
               <dt>{m.label}</dt>
-              <dd>
+              <dd key={dataKey} className="telemetry-in">
                 {m.value}
                 <em>{m.unit}</em>
               </dd>
@@ -70,7 +85,7 @@ export function Overlay({ selectedBed, onSelectBed, children }: Props) {
 
       <footer className="chrome-bottom">
         <ul className="beds">
-          {MOCK_BEDS.map((bed) => (
+          {beds.map((bed) => (
             <li key={bed.bedId}>
               <button
                 type="button"
@@ -80,8 +95,8 @@ export function Overlay({ selectedBed, onSelectBed, children }: Props) {
                 onClick={() => onSelectBed?.(bed.bedId)}
               >
                 <span className="bed-name">{bed.name}</span>
-                <span className="bed-moisture">
-                  {bed.soilMoisture.toFixed(1)}
+                <span key={dataKey} className="bed-moisture telemetry-in">
+                  {fmt(bed.soilMoisture, 1)}
                   <em>%</em>
                 </span>
                 <span className="bed-caption">moisture</span>
@@ -90,9 +105,11 @@ export function Overlay({ selectedBed, onSelectBed, children }: Props) {
           ))}
         </ul>
 
-        <p className="updated">
+        <p key={dataKey} className="updated telemetry-in">
           <span className="updated-dot" />
-          Last updated {formatUpdatedAt(MOCK_UPDATED_AT)}
+          {updatedAt
+            ? `Last updated ${formatUpdatedAt(updatedAt)}`
+            : "Waiting for readings…"}
         </p>
       </footer>
     </div>

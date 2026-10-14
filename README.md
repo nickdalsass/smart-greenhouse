@@ -153,8 +153,9 @@ Pi  --POST /actions/complete->  watering_events + delete pending
 | `POST` | `/water` | Manual enqueue (overrides pending auto) |
 | `GET` | `/actions` | Lease unclaimed/stale pending actions (no event yet) |
 | `POST` | `/actions/complete` | Pi confirms water ran → write `watering_events` |
-| `GET` | `/beds` | List beds (UI later) |
-| `GET`/`PATCH` | `/beds/{id}/settings` | Read/update thresholds (UI later) |
+| `GET` | `/beds` | List beds + settings |
+| `GET` | `/status` | Latest reading per bed (web overlay) |
+| `GET`/`PATCH` | `/beds/{id}/settings` | Read/update thresholds (settings UI later) |
 
 Out of scope for v1: WebSockets/MQTT, auth (optional shared secret later).
 
