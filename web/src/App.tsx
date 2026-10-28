@@ -73,7 +73,7 @@ function ToolButton({
   );
 }
 
-const VOID = "#050a08";
+const VOID = "#0e110e";
 const INTRO_FROM: [number, number, number] = [155, 105, 175];
 const INTRO_MS = 1700;
 

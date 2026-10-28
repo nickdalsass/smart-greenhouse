@@ -58,7 +58,7 @@ export function Login({ onOk }: { onOk: (me: Me) => void }) {
             className={`login-tab${mode === "login" ? " is-active" : ""}`}
             onClick={() => switchMode("login")}
           >
-            Log In
+            Log in
           </button>
           <button
             type="button"
@@ -67,7 +67,7 @@ export function Login({ onOk }: { onOk: (me: Me) => void }) {
             className={`login-tab${mode === "signup" ? " is-active" : ""}`}
             onClick={() => switchMode("signup")}
           >
-            Sign Up
+            Sign up
           </button>
         </div>
 
@@ -106,8 +106,8 @@ export function Login({ onOk }: { onOk: (me: Me) => void }) {
                 ? "Signing in…"
                 : "Creating…"
               : mode === "login"
-                ? "Log In"
-                : "Sign Up"}
+                ? "Log in"
+                : "Sign up"}
           </button>
         </form>
       </div>

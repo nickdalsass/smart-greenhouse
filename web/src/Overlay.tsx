@@ -108,7 +108,7 @@ export function Overlay({
                   {fmt(bed.soilMoisture, 1)}
                   <em>%</em>
                 </span>
-                <span className="bed-caption">moisture</span>
+                <span className="bed-caption">Soil moisture</span>
               </button>
             </li>
           ))}
@@ -118,7 +118,7 @@ export function Overlay({
           <span className="updated-dot" />
           {updatedAt
             ? `Last updated ${formatUpdatedAt(updatedAt)}`
-            : "Waiting for readings…"}
+            : "No readings yet"}
         </p>
       </footer>
     </div>

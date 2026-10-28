@@ -1,18 +1,18 @@
-@import url("https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=JetBrains+Mono:wght@400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600;700&display=swap");
 
 :root {
-  --bg: #07110c;
-  --fg: #eef6ef;
-  --muted: #8fa396;
-  --accent: #9dcf6a;
-  --accent-dim: rgba(157, 207, 106, 0.28);
-  --accent-soft: rgba(157, 207, 106, 0.1);
-  --surface: rgba(7, 17, 12, 0.72);
-  --surface-soft: rgba(7, 17, 12, 0.48);
-  --border: rgba(143, 163, 150, 0.16);
+  --bg: #121612;
+  --fg: #e8e6df;
+  --muted: #9a9b8f;
+  --accent: #7a8f62;
+  --accent-dim: rgba(122, 143, 98, 0.35);
+  --accent-soft: rgba(122, 143, 98, 0.12);
+  --surface: rgba(18, 22, 18, 0.78);
+  --surface-soft: rgba(18, 22, 18, 0.55);
+  --border: rgba(154, 155, 143, 0.18);
   --pad: clamp(1rem, 2.5vw, 2.25rem);
-  --font-display: "Syne", sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-display: "Fraunces", "Source Serif 4", Georgia, serif;
+  --font-ui: "Source Sans 3", "Segoe UI", sans-serif;
   --chrome-gap: clamp(1rem, 2vw, 2rem);
 }
 
@@ -31,7 +31,9 @@ body,
   overflow: hidden;
   background: var(--bg);
   color: var(--fg);
-  font-family: var(--font-display);
+  font-family: var(--font-ui);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
 }
 
 .app {
@@ -46,8 +48,8 @@ body,
   place-items: center;
   padding: var(--pad);
   background:
-    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(157, 207, 106, 0.12), transparent 55%),
-    linear-gradient(165deg, #0c1a12 0%, var(--bg) 45%, #050a08 100%);
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(122, 143, 98, 0.08), transparent 55%),
+    linear-gradient(180deg, #181c16 0%, var(--bg) 55%, #0e110e 100%);
 }
 
 .login-loading {
@@ -69,17 +71,18 @@ body,
 }
 
 .login-brand .brand-mark {
-  font-size: clamp(2.4rem, 8vw, 3.25rem);
-  line-height: 0.92;
+  font-size: clamp(2.2rem, 7vw, 2.9rem);
+  line-height: 1.05;
+  font-weight: 500;
 }
 
 .login-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.35rem;
-  padding: 0.3rem;
+  gap: 0.25rem;
+  padding: 0.25rem;
   border: 1px solid var(--border);
-  border-radius: 0.45rem;
+  border-radius: 0.4rem;
   background: var(--surface-soft);
 }
 
@@ -89,11 +92,9 @@ body,
   border-radius: 0.3rem;
   background: transparent;
   color: var(--muted);
-  font-family: var(--font-display);
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -102,8 +103,8 @@ body,
 }
 
 .login-tab.is-active {
-  color: #07110c;
-  background: var(--accent);
+  color: var(--fg);
+  background: rgba(232, 230, 223, 0.08);
 }
 
 .login-form {
@@ -116,10 +117,8 @@ body,
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: 0.85rem;
+  font-weight: 500;
   color: var(--muted);
 }
 
@@ -129,8 +128,8 @@ body,
   border-radius: 0.35rem;
   background: var(--surface);
   color: var(--fg);
-  font-family: var(--font-mono);
-  font-size: 0.9rem;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
 }
 
 .login-input:focus {
@@ -145,15 +144,14 @@ body,
   -webkit-text-fill-color: var(--fg);
   caret-color: var(--fg);
   border-color: var(--border);
-  box-shadow: 0 0 0 1000px #0c1a12 inset;
+  box-shadow: 0 0 0 1000px #181c16 inset;
   transition: background-color 99999s ease-out;
 }
 
 .login-error {
   margin: 0;
-  color: #e8a0a0;
-  font-size: 0.85rem;
-  font-weight: 500;
+  color: #c99090;
+  font-size: 0.9rem;
 }
 
 .login-submit {
@@ -162,10 +160,10 @@ body,
   border: none;
   border-radius: 0.35rem;
   background: var(--accent);
-  color: #07110c;
-  font-family: var(--font-display);
+  color: #f4f2ea;
+  font-family: var(--font-ui);
   font-size: 0.95rem;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -175,7 +173,7 @@ body,
 }
 
 .login-submit:not(:disabled):hover {
-  filter: brightness(1.05);
+  filter: brightness(1.06);
 }
 
 .canvas-wrap {
@@ -195,14 +193,13 @@ body,
 .tool-rail {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.3rem;
   margin-top: 0.75rem;
-  padding: 0.4rem;
+  padding: 0.35rem;
   width: fit-content;
   pointer-events: auto;
   background: var(--surface);
-  backdrop-filter: blur(12px);
-  border-radius: 0.5rem;
+  border-radius: 0.4rem;
   border: 1px solid var(--border);
 }
 
@@ -218,29 +215,27 @@ body,
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.2rem;
+  gap: 0.15rem;
   width: 3.15rem;
-  padding: 0.55rem 0.35rem 0.4rem;
+  padding: 0.5rem 0.35rem 0.4rem;
   border: none;
-  border-radius: 0.35rem;
+  border-radius: 0.3rem;
   background: transparent;
   color: var(--muted);
   cursor: pointer;
   transition:
-    color 0.2s ease,
-    background 0.2s ease,
-    box-shadow 0.2s ease;
+    color 0.15s ease,
+    background 0.15s ease;
 }
 
 .tool-btn:hover:not(:disabled) {
   color: var(--fg);
-  background: var(--accent-soft);
+  background: rgba(232, 230, 223, 0.06);
 }
 
 .tool-btn.is-active {
-  color: var(--accent);
+  color: var(--fg);
   background: var(--accent-soft);
-  box-shadow: inset 0 0 0 1px var(--accent-dim);
 }
 
 .tool-btn.is-disabled,
@@ -250,24 +245,22 @@ body,
 }
 
 .tool-btn-label {
-  font-family: var(--font-mono);
-  font-size: 0.52rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-size: 0.62rem;
+  font-weight: 500;
   line-height: 1;
 }
 
 .scene-label {
   color: var(--fg);
-  font-family: var(--font-display);
+  font-family: var(--font-ui);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   white-space: nowrap;
   text-shadow:
-    0 0 1px rgba(7, 17, 12, 0.95),
-    0 1px 8px rgba(7, 17, 12, 0.75);
+    0 0 1px rgba(18, 22, 18, 0.95),
+    0 1px 8px rgba(18, 22, 18, 0.75);
   opacity: 0;
   animation: label-in 0.35s ease-out both;
 }
@@ -314,10 +307,11 @@ body,
 
 .brand-mark {
   margin: 0;
-  font-size: clamp(1.6rem, 3.5vw, 2.6rem);
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 0.95;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 3.2vw, 2.35rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
 }
 
 /* Same look as text; overlay is pointer-events:none so re-enable clicks */
@@ -328,52 +322,47 @@ button.brand-mark {
   background: none;
   color: inherit;
   font: inherit;
-  font-size: clamp(1.6rem, 3.5vw, 2.6rem);
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 0.95;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 3.2vw, 2.35rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
   text-align: inherit;
   cursor: pointer;
   pointer-events: auto;
-  transition: opacity 0.28s ease;
+  transition: opacity 0.2s ease;
 }
 
 button.brand-mark:hover {
-  opacity: 0.55;
+  opacity: 0.65;
 }
 
 .brand-sub {
-  margin: 0.4rem 0 0;
+  margin: 0.35rem 0 0;
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: 0.9rem;
+  font-weight: 400;
   color: var(--muted);
 }
 
 .live-dot {
   flex: 0 0 auto;
-  width: 0.42rem;
-  height: 0.42rem;
+  width: 0.4rem;
+  height: 0.4rem;
   border-radius: 50%;
-  background: #e03131;
-  box-shadow: 0 0 0 0 rgba(224, 49, 49, 0.45);
-  animation: live-blink 1.4s ease-in-out infinite;
-  letter-spacing: 0;
+  background: #c45c5c;
+  animation: live-blink 1.6s ease-in-out infinite;
 }
 
 @keyframes live-blink {
   0%,
   100% {
     opacity: 1;
-    box-shadow: 0 0 0 0 rgba(224, 49, 49, 0.45);
   }
   50% {
-    opacity: 0.25;
-    box-shadow: 0 0 0 5px transparent;
+    opacity: 0.3;
   }
 }
 
@@ -389,49 +378,44 @@ button.brand-mark:hover {
 .climate-item {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.2rem;
   min-width: 0;
 }
 
 .climate-item dt {
   margin: 0;
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-size: 0.8rem;
+  font-weight: 500;
   color: var(--muted);
 }
 
 .climate-item dd {
   margin: 0;
-  font-size: clamp(1.35rem, 2.8vw, 2.15rem);
-  font-weight: 700;
-  letter-spacing: -0.04em;
+  font-size: clamp(1.25rem, 2.5vw, 1.9rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
   line-height: 1;
   white-space: nowrap;
 }
 
 .telemetry-in {
-  animation: telemetry-in 0.55s ease-out;
+  animation: telemetry-in 0.45s ease-out;
 }
 
 @keyframes telemetry-in {
   from {
-    opacity: 0.2;
-    translate: 0 6px;
+    opacity: 0.35;
   }
   to {
     opacity: 1;
-    translate: 0 0;
   }
 }
 
 .climate-item em {
   font-style: normal;
-  font-size: 0.42em;
+  font-size: 0.48em;
   margin-left: 0.12em;
-  color: var(--accent);
-  font-family: var(--font-mono);
+  color: var(--muted);
   font-weight: 500;
 }
 
@@ -442,23 +426,18 @@ button.brand-mark:hover {
 .focus-line {
   margin: 0;
   padding: 0.55rem 0.9rem;
-  font-family: var(--font-mono);
-  font-size: clamp(0.68rem, 1.4vw, 0.78rem);
-  letter-spacing: 0.03em;
+  font-size: clamp(0.8rem, 1.4vw, 0.9rem);
   color: var(--muted);
   background: var(--surface-soft);
-  backdrop-filter: blur(10px);
   border: 1px solid var(--border);
   border-radius: 0.35rem;
   animation: rise 0.4s ease-out both;
 }
 
 .focus-line span {
-  color: var(--accent);
-  font-family: var(--font-display);
+  color: var(--fg);
   font-weight: 600;
   margin-right: 0.65rem;
-  letter-spacing: -0.02em;
 }
 
 .chrome-bottom {
@@ -486,7 +465,7 @@ button.brand-mark:hover {
 .bed {
   display: grid;
   grid-template-rows: auto auto auto;
-  gap: 0.2rem;
+  gap: 0.15rem;
   width: 100%;
   min-width: 0;
   margin: 0;
@@ -501,59 +480,54 @@ button.brand-mark:hover {
   pointer-events: auto;
   opacity: 0.55;
   transition:
-    opacity 0.25s ease,
-    background 0.2s ease,
-    box-shadow 0.2s ease;
+    opacity 0.2s ease,
+    background 0.15s ease;
 }
 
 .bed:hover {
   opacity: 0.85;
-  background: var(--accent-soft);
+  background: rgba(232, 230, 223, 0.05);
 }
 
 .bed.is-active {
   opacity: 1;
   background: var(--accent-soft);
-  box-shadow: inset 0 0 0 1px var(--accent-dim);
 }
 
 .bed.is-active .bed-name,
 .bed.is-active .bed-moisture {
-  color: var(--accent);
+  color: var(--fg);
 }
 
 .bed-name {
   font-size: clamp(0.85rem, 1.6vw, 1rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .bed-moisture {
-  font-size: clamp(1.5rem, 3.2vw, 2.35rem);
-  font-weight: 700;
-  letter-spacing: -0.04em;
+  font-size: clamp(1.4rem, 3vw, 2.1rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
   line-height: 1;
 }
 
 .bed-moisture em {
   font-style: normal;
-  font-size: 0.45em;
+  font-size: 0.48em;
   margin-left: 0.1em;
-  color: var(--accent);
-  font-family: var(--font-mono);
+  color: var(--muted);
   font-weight: 500;
 }
 
 .bed-caption {
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-size: 0.78rem;
+  font-weight: 400;
   color: var(--muted);
 }
 
 .bed.is-active .bed-caption {
-  color: var(--accent);
+  color: var(--muted);
 }
 
 .updated {
@@ -561,40 +535,27 @@ button.brand-mark:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.55rem;
-  font-family: var(--font-mono);
-  font-size: 0.82rem;
-  letter-spacing: 0.06em;
+  gap: 0.45rem;
+  font-size: 0.85rem;
   color: var(--muted);
 }
 
 .updated-dot {
   flex: 0 0 auto;
-  width: 0.4rem;
-  height: 0.4rem;
+  width: 0.35rem;
+  height: 0.35rem;
   border-radius: 50%;
   background: var(--accent);
-  animation: pulse 2.4s ease-out infinite;
 }
 
 @keyframes rise {
   from {
     opacity: 0;
-    translate: 0 10px;
+    translate: 0 8px;
   }
   to {
     opacity: 1;
     translate: 0 0;
-  }
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.45;
   }
 }
 
